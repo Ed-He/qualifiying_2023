@@ -15,8 +15,34 @@ static constexpr size_t WINDOW_SIZE = 1024;
 static constexpr size_t SIZE_SPECTRUM = (WINDOW_SIZE / 2) + 1;
 static const ec::Float PI = 3.14159265358979323846f;
 
+/*
 void compute_fourier_transform(const std::vector<ec::Float> &input, std::vector<ec::Float> &outputReal,
-                               std::vector<ec::Float> &outputImag);
+                               std::vector<ec::Float> &outputImag);// */
+
+void compute_fourier_transform(const std::vector<ec::Float> &input, std::vector<ec::Float> &outputReal,
+                               std::vector<ec::Float> &outputImag) {
+
+    //const ec::Float PI = 3.14159265358979323846f;
+
+    size_t inputSize = input.size();
+
+    outputReal.clear();
+    outputReal.resize(inputSize, 0.0f);
+    outputImag.clear();
+    outputImag.resize(inputSize, 0.0f);
+
+    //TODO: Wieder Nestedloops
+    for (size_t I = 0; I < inputSize; ++I) {
+        const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
+
+        for (size_t J = 0; J < inputSize; ++J) {
+            //const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
+
+            outputReal[I] += input[J] * ec_cos(angleTerm * J);
+            outputImag[I] += input[J] * ec_sin(angleTerm * J);
+        }
+    }
+}
 
 std::vector<ec::Float> process_signal(const std::vector<ec::Float> &inputSignal) {
     const size_t numSamples = inputSignal.size();
@@ -67,30 +93,5 @@ std::vector<ec::Float> process_signal(const std::vector<ec::Float> &inputSignal)
     } //TODO: Endet hier....
 
     return outputSpectrum;
-}
-
-void compute_fourier_transform(const std::vector<ec::Float> &input, std::vector<ec::Float> &outputReal,
-                               std::vector<ec::Float> &outputImag) {
-
-    //const ec::Float PI = 3.14159265358979323846f;
-
-    size_t inputSize = input.size();
-
-    outputReal.clear();
-    outputReal.resize(inputSize, 0.0f);
-    outputImag.clear();
-    outputImag.resize(inputSize, 0.0f);
-
-    //TODO: Wieder Nestedloops
-    for (size_t I = 0; I < inputSize; ++I) {
-        const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
-
-        for (size_t J = 0; J < inputSize; ++J) {
-            //const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
-
-            outputReal[I] += input[J] * ec_cos(angleTerm * J);
-            outputImag[I] += input[J] * ec_sin(angleTerm * J);
-        }
-    }//TODO: Endet hier....
 }// */
 
