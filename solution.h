@@ -14,6 +14,8 @@ static constexpr float OVERLAP_RATIO = 0.75;
 static constexpr size_t WINDOW_SIZE = 1024;
 static constexpr size_t SIZE_SPECTRUM = (WINDOW_SIZE / 2) + 1;
 static const ec::Float PI = 3.14159265358979323846f;
+static const ec::Float WINDOW1 = PI / (WINDOW_SIZE - 1) * 2.0f;
+static const ec::Float WINDOW2 = PI / (WINDOW_SIZE - 1) * 4.0f;
 
 /*
 void compute_fourier_transform(const std::vector<ec::Float> &input, std::vector<ec::Float> &outputReal,
@@ -31,9 +33,13 @@ void compute_fourier_transform(const std::vector<ec::Float> &input, std::vector<
     outputImag.clear();
     outputImag.resize(inputSize, 0.0f);
 
+    ec::Float platzhalter = (-2.0f * PI) * (1.0f / ec::Float(inputSize));
+    ec::Float angleTerm;
+
     //TODO: Wieder Nestedloops
     for (size_t I = 0; I < inputSize; ++I) {
-        const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
+        //const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
+        angleTerm = ec::Float(I) * platzhalter;
 
         for (size_t J = 0; J < inputSize; ++J) {
             //const ec::Float angleTerm = (-2.0f * PI) * ec::Float(I) * (1.0f / ec::Float(inputSize));
@@ -59,38 +65,45 @@ std::vector<ec::Float> process_signal(const std::vector<ec::Float> &inputSignal)
 
     size_t idxStartWin = 0;
 
+    ec::Float blackmanWinCoef;
+    ec::Float freqVal;
+    ec::Float freqWindow = ec::Float(WINDOW_SIZE);
+
     //TODO: Optimierungspotential -NestedLoops-
     for (size_t J = 0; J < numWins; J++) {
         for (size_t I = 0; I < WINDOW_SIZE; I++) {
 
             //TODO: Find a better way to declare this variable
-            ec::Float blackmanWinCoef = 0.42f - 0.5f * ec_cos(ec::Float(I) * 2.0f * PI / (WINDOW_SIZE - 1));
-            blackmanWinCoef += 0.08f * ec_cos(ec::Float(I) * 4.0f * PI / (WINDOW_SIZE - 1));
+            blackmanWinCoef = 0.42f - (0.5f * ec_cos(ec::Float(I) * WINDOW1)) + (0.08f * ec_cos(ec::Float(I) * WINDOW2));
+            //blackmanWinCoef = 0.42f - 0.5f * ec_cos(ec::Float(I) * 2.0f * PI / (WINDOW_SIZE - 1));
+            //blackmanWinCoef += 0.08f * ec_cos(ec::Float(I) * 4.0f * PI / (WINDOW_SIZE - 1));
 
             signalWindow[I] = inputSignal[I + idxStartWin] * blackmanWinCoef;
         }
 
+        idxStartWin += stepBetweenWins;
+
         compute_fourier_transform(signalWindow, signalFreqReal, signalFreqImag);
 
-        for (size_t I = 0; I < SIZE_SPECTRUM; I++) {
+        freqVal = ec_sqrt(signalFreqReal[0]*signalFreqReal[0] + signalFreqImag[0]*signalFreqImag[0]) / freqWindow;
+        freqVal = 30.0f + 10.0f * ec_log10(freqVal * freqVal);
+        outputSpectrum[0] = ec_max(outputSpectrum[0], freqVal);
 
-            ec::Float freqVal = signalFreqReal[I] * signalFreqReal[I] + signalFreqImag[I] * signalFreqImag[I];
-            freqVal = ec_sqrt(freqVal);
-            freqVal = freqVal / ec::Float(WINDOW_SIZE);
+        for (size_t I = 1; I < SIZE_SPECTRUM - 1; I++) {
 
-            if (I > 0 && I < SIZE_SPECTRUM - 1)
-                freqVal = freqVal * 2.0f;
-
-            freqVal = freqVal * freqVal;
-
-            freqVal = 10.0f * ec_log10(1000.0f * freqVal);
-
+            freqVal = ec_sqrt(signalFreqReal[I]*signalFreqReal[I] + signalFreqImag[I]*signalFreqImag[I]) / freqWindow;
+            freqVal = 30.0f + 10.0f * ec_log10(freqVal * freqVal * 4.0f);
             outputSpectrum[I] = ec_max(outputSpectrum[I], freqVal);
         }
 
-        idxStartWin += stepBetweenWins;
+        size_t L = SIZE_SPECTRUM - 1;
+        freqVal = ec_sqrt(signalFreqReal[L]*signalFreqReal[L] + signalFreqImag[L]*signalFreqImag[L]) / freqWindow;
+        freqVal = 30.0f + 10.0f * ec_log10(freqVal * freqVal);
+        outputSpectrum[L] = ec_max(outputSpectrum[L], freqVal);
 
-    } //TODO: Endet hier....
+        //idxStartWin += stepBetweenWins;
+
+    }//TODO: Endet hier....
 
     return outputSpectrum;
 }// */
